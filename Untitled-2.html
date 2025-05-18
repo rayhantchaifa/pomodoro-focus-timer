@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pomodoro Technique Timer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+  body {
+    margin: 0;
+    height: 100vh;
+    background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Montserrat', sans-serif;
+    color: #34495e;
+  }
+  .container {
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 20px;
+    padding: 2rem 3rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    text-align: center;
+    max-width: 320px;
+    width: 100%;
+  }
+  h1 {
+    margin-bottom: 0.3rem;
+    font-weight: 700;
+    font-size: 2rem;
+    color: #1b3b72;
+  }
+  h2 {
+    margin-top: 0;
+    font-weight: 400;
+    font-size: 1.2rem;
+    color: #2980b9;
+    font-style: italic;
+  }
+  #task-label {
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  #task-input {
+    width: 100%;
+    padding: 0.4rem 0.75rem;
+    font-size: 1rem;
+    border-radius: 12px;
+    border: 2px solid #2980b9;
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+    outline-color: #2980b9;
+  }
+  .current-task {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    font-style: italic;
+    color: #34495e;
+    min-height: 1.3em;
+  }
+  .time {
+    font-size: 4rem;
+    margin: 1.3rem 0 2rem 0;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+  }
+  button {
+    background: #6abade;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    box-shadow: 0 4px 15px rgba(106, 186, 222, 0.6);
+    margin: 0 0.5rem;
+  }
+  button:hover:not(:disabled) {
+    background: #559ccf;
+  }
+  button:disabled {
+    background: #b0d6f5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .status {
+    margin-top: 1rem;
+    font-style: italic;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    min-height: 1.3em;
+  }
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.1);
+      opacity: 0.7;
+    }
+  }
+  .time.running {
+    animation: pulse 2s infinite ease-in-out;
+    color: #2980b9;
+  }
+  footer {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #1b3b72;
+  }
+  footer a {
+    color: #2980b9;
+    text-decoration: none;
+    margin: 0 0.5rem;
+    font-weight: 600;
+  }
+  footer a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Pomodoro Technique Timer</h1>
+    <h2>Stay focused & breathe easy</h2>
+
+    <label for="task-input" id="task-label">Current Task:</label>
+    <input type="text" id="task-input" placeholder="What are you working on?" />
+
+    <div class="current-task" id="current-task-display">No task set</div>
+
+    <div id="time" class="time">25:00</div>
+    <div>
+      <button id="start">Start</button>
+      <button id="pause" disabled>Pause</button>
+      <button id="reset" disabled>Reset</button>
+    </div>
+    <div class="status" id="status">Ready to focus</div>
+  </div>
+
+  <footer>
+    <span>Rayhan | Find me on</span>
+    <a href="https://github.com/rayhantchaifa" target="_blank" rel="noopener noreferrer">GitHub</a> |
+    <a href="https://twitter.com/raydevx" target="_blank" rel="noopener noreferrer">Twitter</a>
+  </footer>
+
+  <audio id="bell" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
+
+<script>
+  const startBtn = document.getElementById('start');
+  const pauseBtn = document.getElementById('pause');
+  const resetBtn = document.getElementById('reset');
+  const timeDisplay = document.getElementById('time');
+  const status = document.getElementById('status');
+  const bellSound = document.getElementById('bell');
+
+  const taskInput = document.getElementById('task-input');
+  const currentTaskDisplay = document.getElementById('current-task-display');
+
+  const workDuration = 25 * 60; // 25 minutes
+  const breakDuration = 5 * 60; // 5 minutes
+
+  let timeLeft = workDuration;
+  let isRunning = false;
+  let isWorkTime = true;
+  let timer;
+
+  function formatTime(seconds) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function updateDisplay() {
+    timeDisplay.textContent = formatTime(timeLeft);
+  }
+
+  function switchSession() {
+    isWorkTime = !isWorkTime;
+    timeLeft = isWorkTime ? workDuration : breakDuration;
+    status.textContent = isWorkTime ? 'Focus time! 🔥' : 'Take a break... ☁️';
+    bellSound.play();
+    updateDisplay();
+  }
+
+  function tick() {
+    if (timeLeft > 0) {
+      timeLeft--;
+      updateDisplay();
+    } else {
+      switchSession();
+    }
+  }
+
+  function startTimer() {
+    if (!isRunning) {
+      isRunning = true;
+      timer = setInterval(tick, 1000);
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      resetBtn.disabled = false;
+      timeDisplay.classList.add('running');
+      status.textContent = isWorkTime ? 'Focus time! 🔥' : 'Take a break... ☁️';
+    }
+  }
+
+  function pauseTimer() {
+    if (isRunning) {
+      isRunning = false;
+      clearInterval(timer);
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      timeDisplay.classList.remove('running');
+      status.textContent = 'Paused';
+    }
+  }
+
+  function resetTimer() {
+    clearInterval(timer);
+    isRunning = false;
+    isWorkTime = true;
+    timeLeft = workDuration;
+    updateDisplay();
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+    resetBtn.disabled = true;
+    timeDisplay.classList.remove('running');
+    status.textContent = 'Ready to focus';
+  }
+
+  // Update current task display live as user types
+  taskInput.addEventListener('input', () => {
+    const task = taskInput.value.trim();
+    currentTaskDisplay.textContent = task ? task : 'No task set';
+  });
+
+  startBtn.addEventListener('click', startTimer);
+  pauseBtn.addEventListener('click', pauseTimer);
+  resetBtn.addEventListener('click', resetTimer);
+
+  updateDisplay();
+</script>
+</body>
+</html>
